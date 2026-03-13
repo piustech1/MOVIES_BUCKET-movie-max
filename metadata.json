@@ -1,0 +1,5 @@
+{
+  "name": "MovieMax Admin",
+  "description": "Admin dashboard for managing movie uploads and storage on Cloudflare R2.",
+  "requestFramePermissions": []
+}
