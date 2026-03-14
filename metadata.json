@@ -1,5 +1,5 @@
 {
-  "name": "MovieMax Admin",
-  "description": "Admin dashboard for managing movie uploads and storage on Cloudflare R2.",
+  "name": "MovieMax Server",
+  "description": "Professional movie management server and admin dashboard for Cloudflare R2 storage, featuring VJ management and secure upload controls.",
   "requestFramePermissions": []
 }
