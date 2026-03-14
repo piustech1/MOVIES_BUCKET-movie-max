@@ -21,7 +21,6 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
-      // Auto-fill movie name from file name (without extension)
       if (!movieName) {
         setMovieName(selectedFile.name.replace(/\.[^/.]+$/, ""));
       }
@@ -49,20 +48,22 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-black/5 p-6 mb-8">
-      <div className="flex items-center gap-2 mb-6">
-        <Upload className="w-5 h-5 text-emerald-600" />
-        <h2 className="text-xl font-semibold text-zinc-900">Upload New Movie</h2>
+    <div className="glass-card p-8">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+          <Upload className="w-5 h-5 text-brand" />
+        </div>
+        <h2 className="text-2xl font-bold font-display text-white">Upload New Movie</h2>
       </div>
 
-      <form onSubmit={handleUpload} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={handleUpload} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* File Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 flex items-center gap-2">
-              <Film className="w-4 h-4" /> Video File
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <Film className="w-3.5 h-3.5" /> Video File
             </label>
-            <div className="relative">
+            <div className="relative group">
               <input
                 type="file"
                 accept=".mp4,.mkv,.webm"
@@ -73,82 +74,82 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
               />
               <label
                 htmlFor="movie-file"
-                className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-zinc-200 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/50 transition-all"
+                className="flex items-center justify-center w-full px-5 py-4 border-2 border-dashed border-zinc-800 rounded-2xl cursor-pointer group-hover:border-brand/50 group-hover:bg-brand/5 transition-all"
               >
-                <span className="text-zinc-500 truncate">
-                  {file ? file.name : 'Click to select video (MP4, MKV, WEBM)'}
+                <span className="text-zinc-400 truncate font-medium">
+                  {file ? file.name : 'Select MP4, MKV, or WEBM'}
                 </span>
               </label>
             </div>
           </div>
 
           {/* Movie Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 flex items-center gap-2">
-              <Tag className="w-4 h-4" /> Movie Name
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5" /> Movie Name
             </label>
             <input
               type="text"
               value={movieName}
               onChange={(e) => setMovieName(e.target.value)}
               placeholder="Enter movie title"
-              className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              className="w-full px-5 py-4 bg-zinc-800/50 border border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-white placeholder:text-zinc-600"
               required
             />
           </div>
 
           {/* Folder Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 flex items-center gap-2">
-              <Folder className="w-4 h-4" /> Storage Folder
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <Folder className="w-3.5 h-3.5" /> Storage Folder
             </label>
             <select
               value={folder}
               onChange={(e) => setFolder(e.target.value)}
-              className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              className="w-full px-5 py-4 bg-zinc-800/50 border border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-white appearance-none cursor-pointer"
             >
-              {FOLDERS.map(f => <option key={f} value={f}>{f}</option>)}
+              {FOLDERS.map(f => <option key={f} value={f} className="bg-zinc-900">{f}</option>)}
             </select>
           </div>
 
           {/* Category Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 flex items-center gap-2">
-              <Tag className="w-4 h-4" /> Category
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5" /> Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              className="w-full px-5 py-4 bg-zinc-800/50 border border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-white appearance-none cursor-pointer"
             >
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIES.map(c => <option key={c} value={c} className="bg-zinc-900">{c}</option>)}
             </select>
           </div>
         </div>
 
         {status && (
-          <div className={`p-4 rounded-xl flex items-center gap-3 ${
-            status.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'
+          <div className={`p-5 rounded-2xl flex items-center gap-4 ${
+            status.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
           }`}>
-            {status.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-            <span className="text-sm font-medium">{status.message}</span>
+            {status.type === 'success' ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
+            <span className="text-sm font-bold">{status.message}</span>
           </div>
         )}
 
         <button
           type="submit"
           disabled={isUploading || !file || !movieName}
-          className="w-full md:w-auto px-8 py-3 bg-zinc-900 text-white rounded-xl font-medium hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          className="w-full md:w-auto px-10 py-4 orange-gradient text-white rounded-2xl font-black hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-xl shadow-brand/20"
         >
           {isUploading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Uploading Movie...
+              <Loader2 className="w-6 h-6 animate-spin" />
+              Uploading...
             </>
           ) : (
             <>
-              <Upload className="w-5 h-5" />
-              Start Upload
+              <Upload className="w-6 h-6" />
+              Upload Movie
             </>
           )}
         </button>

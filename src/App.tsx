@@ -1,24 +1,32 @@
 import { useState, useEffect } from 'react';
-import { MovieUpload } from './components/MovieUpload';
-import { MovieList } from './components/MovieList';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { movieApi } from './services/api';
 import { Movie } from './types';
-import { Play, Shield, Database, Settings } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Layout } from './components/Layout';
+import { DashboardPage } from './pages/DashboardPage';
+import { LibraryPage } from './pages/LibraryPage';
+import { UploadPage } from './pages/UploadPage';
+import { AuthPage } from './pages/AuthPage';
 
 export default function App() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('moviemax_auth') === 'true';
+  });
 
   const fetchMovies = async () => {
+    if (!isAuthenticated) return;
     setIsLoading(true);
     try {
       const data = await movieApi.listMovies();
       setMovies(data);
       setError(null);
     } catch (err: any) {
-      setError('Could not connect to the Movie Server. Please check your R2 configuration.');
+      setError('Could not connect to the Movie Server. Please check your Worker configuration.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -27,85 +35,81 @@ export default function App() {
 
   useEffect(() => {
     fetchMovies();
-  }, []);
+  }, [isAuthenticated]);
+
+  const handleLogin = (password: string) => {
+    if (password === 'greatdev') {
+      setIsAuthenticated(true);
+      localStorage.setItem('moviemax_auth', 'true');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('moviemax_auth');
+  };
+
+  if (!isAuthenticated) {
+    return <AuthPage onLogin={handleLogin} />;
+  }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-zinc-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
-      {/* Sidebar Navigation */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-black/5 hidden lg:flex flex-col p-6">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-10 h-10 bg-zinc-900 rounded-xl flex items-center justify-center">
-            <Play className="w-6 h-6 text-emerald-400 fill-emerald-400" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight">MovieMax</h1>
-        </div>
+    <Router>
+      <Layout onRefresh={fetchMovies}>
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-10 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-lg">Connection Error</p>
+              <p className="text-sm opacity-80">{error}</p>
+            </div>
+            <button 
+              onClick={fetchMovies}
+              className="px-5 py-2 bg-red-500 text-white rounded-xl text-xs font-black transition-all hover:bg-red-600 active:scale-95"
+            >
+              RETRY
+            </button>
+          </motion.div>
+        )}
 
-        <nav className="space-y-1">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 bg-emerald-50 text-emerald-700 rounded-xl font-medium transition-all">
-            <Database className="w-5 h-5" />
-            Movie Library
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 rounded-xl font-medium transition-all">
-            <Shield className="w-5 h-5" />
-            Security
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 rounded-xl font-medium transition-all">
-            <Settings className="w-5 h-5" />
-            Settings
-          </a>
-        </nav>
-
-        <div className="mt-auto p-4 bg-zinc-900 rounded-2xl text-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Storage Status</p>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Cloudflare R2</span>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">ACTIVE</span>
-          </div>
-          <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-emerald-500 h-full w-[45%]"></div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="lg:ml-64 p-4 md:p-8 lg:p-12 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <header className="mb-10">
-            <h2 className="text-3xl font-bold text-zinc-900 mb-2">Movie Server Dashboard</h2>
-            <p className="text-zinc-500">Manage your Cloudflare R2 storage and streaming links.</p>
-          </header>
-
-          {error && (
-            <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                <Shield className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-semibold">Connection Error</p>
-                <p className="text-sm opacity-90">{error}</p>
-              </div>
+        <Routes>
+          <Route path="/" element={<DashboardPage movies={movies} />} />
+          <Route path="/library" element={
+            <LibraryPage 
+              movies={movies} 
+              onDelete={fetchMovies} 
+              isLoading={isLoading} 
+            />
+          } />
+          <Route path="/upload" element={<UploadPage onUploadSuccess={fetchMovies} />} />
+          <Route path="/security" element={
+            <div className="glass-card p-12 text-center">
+              <Shield className="w-16 h-16 text-brand mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-white mb-2">Security Protocols</h3>
+              <p className="text-zinc-500">All movie assets are encrypted and stored securely in Cloudflare R2.</p>
               <button 
-                onClick={fetchMovies}
-                className="ml-auto px-4 py-1.5 bg-red-100 hover:bg-red-200 rounded-lg text-xs font-bold transition-all"
+                onClick={handleLogout}
+                className="mt-8 px-6 py-2 bg-zinc-800 text-zinc-400 hover:text-white rounded-xl text-xs font-bold border border-border-dark"
               >
-                RETRY
+                Logout Session
               </button>
             </div>
-          )}
-
-          <MovieUpload onUploadSuccess={fetchMovies} />
-          
-          <MovieList 
-            movies={movies} 
-            onDelete={fetchMovies} 
-            isLoading={isLoading} 
-          />
-        </motion.div>
-      </main>
-    </div>
+          } />
+          <Route path="/settings" element={
+            <div className="glass-card p-12 text-center">
+              <h3 className="text-2xl font-bold text-white mb-2">System Settings</h3>
+              <p className="text-zinc-500">Configure your Cloudflare Worker and R2 bucket credentials.</p>
+            </div>
+          } />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </Router>
   );
 }

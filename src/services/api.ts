@@ -1,8 +1,7 @@
 import { Movie, MovieListResponse, UploadResponse } from '../types';
 
-// In a real Cloudflare Worker deployment, this would be your worker URL
-// For the preview, we'll use the local Express server which we'll set up to proxy/mock the R2 logic
-const API_BASE = '/api'; 
+// The external Cloudflare Worker URL provided by the user
+const API_BASE = 'https://moviemax-worker.piustechdevoff.workers.dev'; 
 
 export const movieApi = {
   async listMovies(): Promise<Movie[]> {
