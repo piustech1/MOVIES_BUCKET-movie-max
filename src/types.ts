@@ -4,6 +4,7 @@ export interface Movie {
   url: string;
   size?: number;
   uploaded?: string;
+  category?: string;
 }
 
 export interface UploadResponse {

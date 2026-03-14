@@ -78,6 +78,7 @@ export const MovieList: React.FC<MovieListProps> = ({ movies, onDelete, isLoadin
             <thead>
               <tr className="bg-zinc-800/30 border-b border-border-dark">
                 <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Movie Asset</th>
+                <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Assigned VJ</th>
                 <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Storage Path</th>
                 <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">File Size</th>
                 <th className="px-8 py-5 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] text-right">Actions</th>
@@ -91,7 +92,7 @@ export const MovieList: React.FC<MovieListProps> = ({ movies, onDelete, isLoadin
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <td colSpan={4} className="px-8 py-20 text-center">
+                    <td colSpan={5} className="px-8 py-20 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center">
                           <Film className="w-8 h-8 text-zinc-700" />
@@ -116,6 +117,13 @@ export const MovieList: React.FC<MovieListProps> = ({ movies, onDelete, isLoadin
                             <Film className="w-5 h-5 text-brand" />
                           </div>
                           <span className="font-bold text-white tracking-tight">{movie.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1 bg-brand/10 text-brand text-[10px] font-black uppercase tracking-widest rounded-full border border-brand/20">
+                            {movie.category || 'General'}
+                          </span>
                         </div>
                       </td>
                       <td className="px-8 py-5">

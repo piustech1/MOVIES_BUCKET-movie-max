@@ -8,6 +8,7 @@ import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { LibraryPage } from './pages/LibraryPage';
 import { UploadPage } from './pages/UploadPage';
+import { VJManagementPage } from './pages/VJManagementPage';
 import { AuthPage } from './pages/AuthPage';
 
 export default function App() {
@@ -37,6 +38,8 @@ export default function App() {
     fetchMovies();
   }, [isAuthenticated]);
 
+  const totalSize = movies.reduce((acc, movie) => acc + (movie.size || 0), 0);
+
   const handleLogin = (password: string) => {
     if (password === 'greatdev') {
       setIsAuthenticated(true);
@@ -55,7 +58,7 @@ export default function App() {
 
   return (
     <Router>
-      <Layout onRefresh={fetchMovies}>
+      <Layout onRefresh={fetchMovies} totalSize={totalSize}>
         {error && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
@@ -88,6 +91,7 @@ export default function App() {
             />
           } />
           <Route path="/upload" element={<UploadPage onUploadSuccess={fetchMovies} />} />
+          <Route path="/vjs" element={<VJManagementPage />} />
           <Route path="/security" element={
             <div className="glass-card p-12 text-center">
               <Shield className="w-16 h-16 text-brand mx-auto mb-6" />

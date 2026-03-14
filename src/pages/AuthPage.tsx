@@ -22,6 +22,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-bg-dark flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: 'url("https://m.media-amazon.com/images/I/817rFOdsCFL._AC_UF894,1000_QL80_.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'grayscale(100%) contrast(120%)'
+        }}
+      />
+
       {/* Background Accents */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-brand/10 blur-[150px] rounded-full -z-10 pointer-events-none"></div>
       <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-brand/10 blur-[120px] rounded-full -z-10 pointer-events-none"></div>

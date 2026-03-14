@@ -1,20 +1,33 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Play, Shield, Database, Settings, Menu, X, LayoutDashboard, HardDrive, Upload } from 'lucide-react';
+import { Play, Shield, Database, Settings, Menu, X, LayoutDashboard, HardDrive, Upload, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface LayoutProps {
   children: React.ReactNode;
   onRefresh: () => void;
+  totalSize: number;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, onRefresh }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, onRefresh, totalSize }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const formatSize = (bytes: number) => {
+    const gb = bytes / (1024 * 1024 * 1024);
+    if (gb < 1) {
+      const mb = bytes / (1024 * 1024);
+      return `${mb.toFixed(2)} MB`;
+    }
+    return `${gb.toFixed(2)} GB`;
+  };
+
+  const usagePercentage = Math.min((totalSize / (1024 * 1024 * 1024 * 1024)) * 100, 100);
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/library', label: 'Movie Library', icon: Database },
     { to: '/upload', label: 'Upload Content', icon: Upload },
+    { to: '/vjs', label: 'VJ Management', icon: Users },
     { to: '/security', label: 'Security', icon: Shield },
     { to: '/settings', label: 'Settings', icon: Settings },
   ];
@@ -61,12 +74,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, onRefresh }) => {
         <div className="w-full bg-zinc-700/50 h-2 rounded-full overflow-hidden">
           <motion.div 
             initial={{ width: 0 }}
-            animate={{ width: '65%' }}
+            animate={{ width: `${usagePercentage}%` }}
             transition={{ duration: 1, delay: 0.5 }}
             className="bg-brand h-full shadow-[0_0_12px_rgba(249,115,22,0.4)]"
           />
         </div>
-        <p className="text-[10px] text-zinc-500 mt-3 text-center font-medium">650GB / 1TB Used</p>
+        <p className="text-[10px] text-zinc-500 mt-3 text-center font-medium">
+          {formatSize(totalSize)} / 1TB Used
+        </p>
       </div>
     </>
   );

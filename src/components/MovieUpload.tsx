@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Upload, Film, Folder, Tag, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Upload, Film, Folder, Tag, Loader2, CheckCircle2, AlertCircle, Users } from 'lucide-react';
 import { movieApi } from '../services/api';
 
 interface MovieUploadProps {
@@ -7,15 +7,31 @@ interface MovieUploadProps {
 }
 
 const FOLDERS = ['Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Series'];
-const CATEGORIES = ['Hollywood', 'Bollywood', 'Anime', 'Documentary'];
 
 export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [movieName, setMovieName] = useState('');
   const [folder, setFolder] = useState(FOLDERS[0]);
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [vj, setVj] = useState('');
+  const [vjs, setVjs] = useState<{ id: number; name: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingVjs, setIsLoadingVjs] = useState(true);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  useEffect(() => {
+    const fetchVjs = async () => {
+      try {
+        const data = await movieApi.listVjs();
+        setVjs(data);
+        if (data.length > 0) setVj(data[0].name);
+      } catch (err) {
+        console.error('Failed to fetch VJs', err);
+      } finally {
+        setIsLoadingVjs(false);
+      }
+    };
+    fetchVjs();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -35,7 +51,8 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
     setStatus(null);
 
     try {
-      await movieApi.uploadMovie(file, movieName, folder, category);
+      // Repurposing 'category' as 'vj' in the API call
+      await movieApi.uploadMovie(file, movieName, folder, vj || 'General');
       setStatus({ type: 'success', message: 'Movie uploaded successfully!' });
       setFile(null);
       setMovieName('');
@@ -112,18 +129,30 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
             </select>
           </div>
 
-          {/* Category Selection */}
+          {/* VJ Selection */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-              <Tag className="w-3.5 h-3.5" /> Category
+              <Users className="w-3.5 h-3.5" /> Assigned VJ
             </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-5 py-4 bg-zinc-800/50 border border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-white appearance-none cursor-pointer"
-            >
-              {CATEGORIES.map(c => <option key={c} value={c} className="bg-zinc-900">{c}</option>)}
-            </select>
+            <div className="relative">
+              <select
+                value={vj}
+                onChange={(e) => setVj(e.target.value)}
+                disabled={isLoadingVjs || vjs.length === 0}
+                className="w-full px-5 py-4 bg-zinc-800/50 border border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-white appearance-none cursor-pointer disabled:opacity-50"
+              >
+                {isLoadingVjs ? (
+                  <option>Loading VJs...</option>
+                ) : vjs.length === 0 ? (
+                  <option>No VJs available</option>
+                ) : (
+                  vjs.map(v => <option key={v.id} value={v.name} className="bg-zinc-900">{v.name}</option>)
+                )}
+              </select>
+              {vjs.length === 0 && !isLoadingVjs && (
+                <p className="text-[10px] text-brand font-bold uppercase mt-1 ml-1">Please add VJs in VJ Management first.</p>
+              )}
+            </div>
           </div>
         </div>
 
