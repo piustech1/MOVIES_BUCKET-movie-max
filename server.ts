@@ -18,56 +18,59 @@ db.exec(`
   )
 `);
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
 
-  app.use(cors());
-  app.use(express.json());
+app.use(cors());
+app.use(express.json());
 
-  // Request logging
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
+// Request logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+// Authentication Middleware
+const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authKey = req.headers['x-auth-key'];
+  if (authKey === 'greatdev') {
     next();
-  });
+  } else {
+    res.status(401).json({ error: 'Unauthorized access. Please login.' });
+  }
+};
 
-  // Authentication Middleware
-  const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const authKey = req.headers['x-auth-key'];
-    if (authKey === 'greatdev') {
-      next();
-    } else {
-      res.status(401).json({ error: 'Unauthorized access. Please login.' });
-    }
-  };
+// VJ Management API (Protected)
+app.get('/api/vjs', authMiddleware, (req, res) => {
+  const vjs = db.prepare('SELECT * FROM vjs ORDER BY name ASC').all();
+  res.json(vjs);
+});
 
-  // VJ Management API (Protected)
-  app.get('/api/vjs', authMiddleware, (req, res) => {
-    const vjs = db.prepare('SELECT * FROM vjs ORDER BY name ASC').all();
-    res.json(vjs);
-  });
+app.post('/api/vjs', authMiddleware, (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  try {
+    const info = db.prepare('INSERT INTO vjs (name) VALUES (?)').run(name);
+    res.json({ id: info.lastInsertRowid, name });
+  } catch (err: any) {
+    res.status(400).json({ error: 'VJ already exists' });
+  }
+});
 
-  app.post('/api/vjs', authMiddleware, (req, res) => {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name is required' });
-    try {
-      const info = db.prepare('INSERT INTO vjs (name) VALUES (?)').run(name);
-      res.json({ id: info.lastInsertRowid, name });
-    } catch (err: any) {
-      res.status(400).json({ error: 'VJ already exists' });
-    }
-  });
+app.delete('/api/vjs/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM vjs WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
 
-  app.delete('/api/vjs/:id', authMiddleware, (req, res) => {
-    db.prepare('DELETE FROM vjs WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  });
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled Error:', err);
+  res.status(500).json({ error: 'Internal Server Error', message: err.message });
+});
 
-  // Global Error Handler
-  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Unhandled Error:', err);
-    res.status(500).json({ error: 'Internal Server Error', message: err.message });
-  });
+export default app;
+
+async function startServer() {
+  const PORT = 3000;
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
@@ -89,4 +92,7 @@ async function startServer() {
   });
 }
 
-startServer();
+// Only start the server if not running as a Vercel function
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  startServer();
+}
