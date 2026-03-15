@@ -149,9 +149,6 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
                   vjs.map(v => <option key={v.id} value={v.name} className="bg-zinc-900">{v.name}</option>)
                 )}
               </select>
-              {vjs.length === 0 && !isLoadingVjs && (
-                <p className="text-[10px] text-brand font-bold uppercase mt-1 ml-1">Please add VJs in VJ Management first.</p>
-              )}
             </div>
           </div>
         </div>

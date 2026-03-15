@@ -51,41 +51,20 @@ export const movieApi = {
     return data.success;
   },
 
-  // VJ Management (Local API)
+  // VJ Management (Hardcoded)
   async listVjs(): Promise<{ id: number; name: string }[]> {
-    const response = await fetch('/api/vjs', {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Failed to fetch VJs');
-    return response.json();
+    const vjs = [
+      'vj junior', 'vj ice p', 'vj Emmy', 'vj shan', 'vj mark', 
+      'vj Uncle T', 'vj Mosco', 'vj Musa', 'vj jingo'
+    ];
+    return vjs.map((name, index) => ({ id: index + 1, name }));
   },
 
   async addVj(name: string): Promise<{ id: number; name: string }> {
-    const response = await fetch('/api/vjs', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ name }),
-    });
-    
-    if (!response.ok) {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to add VJ');
-      } else {
-        const text = await response.text();
-        console.error('Non-JSON Error Response:', text);
-        throw new Error(`Server Error (${response.status}): ${text.slice(0, 100)}...`);
-      }
-    }
-    return response.json();
+    throw new Error('VJ management is now system-automated. Manual adding is disabled.');
   },
 
   async deleteVj(id: number): Promise<void> {
-    const response = await fetch(`/api/vjs/${id}`, { 
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Failed to delete VJ');
+    throw new Error('VJ management is now system-automated. Manual deletion is disabled.');
   }
 };
