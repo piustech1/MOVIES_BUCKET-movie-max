@@ -66,9 +66,17 @@ export const movieApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ name }),
     });
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to add VJ');
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add VJ');
+      } else {
+        const text = await response.text();
+        console.error('Non-JSON Error Response:', text);
+        throw new Error(`Server Error (${response.status}): ${text.slice(0, 100)}...`);
+      }
     }
     return response.json();
   },

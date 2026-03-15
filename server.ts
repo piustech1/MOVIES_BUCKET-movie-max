@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import dotenv from 'dotenv';
 import Database from 'better-sqlite3';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -21,7 +22,14 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(cors());
   app.use(express.json());
+
+  // Request logging
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+  });
 
   // Authentication Middleware
   const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -53,6 +61,12 @@ async function startServer() {
   app.delete('/api/vjs/:id', authMiddleware, (req, res) => {
     db.prepare('DELETE FROM vjs WHERE id = ?').run(req.params.id);
     res.json({ success: true });
+  });
+
+  // Global Error Handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Unhandled Error:', err);
+    res.status(500).json({ error: 'Internal Server Error', message: err.message });
   });
 
   // Vite middleware for development
