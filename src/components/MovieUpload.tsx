@@ -15,6 +15,7 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
   const [vj, setVj] = useState('');
   const [vjs, setVjs] = useState<{ id: number; name: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isLoadingVjs, setIsLoadingVjs] = useState(true);
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
@@ -48,14 +49,22 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
     if (!file || !movieName) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
     setStatus(null);
 
     try {
       // Repurposing 'category' as 'vj' in the API call
-      await movieApi.uploadMovie(file, movieName, folder, vj || 'General');
+      await movieApi.uploadMovie(
+        file, 
+        movieName, 
+        folder, 
+        vj || 'General',
+        (progress) => setUploadProgress(progress)
+      );
       setStatus({ type: 'success', message: 'Movie uploaded successfully!' });
       setFile(null);
       setMovieName('');
+      setUploadProgress(0);
       onUploadSuccess();
     } catch (err: any) {
       setStatus({ type: 'error', message: err.message || 'Failed to upload movie' });
@@ -152,6 +161,21 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
             </div>
           </div>
         </div>
+
+        {isUploading && (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <p className="text-[10px] font-black text-brand uppercase tracking-widest">Uploading to R2...</p>
+              <p className="text-[10px] font-black text-white uppercase tracking-widest">{uploadProgress}%</p>
+            </div>
+            <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full orange-gradient transition-all duration-300 ease-out"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {status && (
           <div className={`p-5 rounded-2xl flex items-center gap-4 ${
