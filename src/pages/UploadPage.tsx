@@ -25,16 +25,16 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-6 rounded-2xl bg-zinc-800/30 border border-border-dark text-center">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Max File Size</p>
-          <p className="text-lg font-bold text-white">2 GB</p>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Max Payload</p>
+          <p className="text-xl font-bold text-white tracking-tight">5 GB</p>
         </div>
         <div className="p-6 rounded-2xl bg-zinc-800/30 border border-border-dark text-center">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Target Storage</p>
-          <p className="text-lg font-bold text-white">R2 Bucket</p>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Storage Protocol</p>
+          <p className="text-xl font-bold text-white tracking-tight">Cloudflare R2</p>
         </div>
         <div className="p-6 rounded-2xl bg-zinc-800/30 border border-border-dark text-center">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Encryption</p>
-          <p className="text-lg font-bold text-white">AES-256</p>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Security</p>
+          <p className="text-xl font-bold text-white tracking-tight">System Encrypted</p>
         </div>
       </div>
     </div>

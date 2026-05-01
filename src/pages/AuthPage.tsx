@@ -3,20 +3,25 @@ import { motion } from 'motion/react';
 import { Lock, Play, ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface AuthPageProps {
-  onLogin: (password: string) => void;
+  onLogin: (password: string) => Promise<boolean>;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'greatdev') {
-      onLogin(password);
-    } else {
+    if (!password.trim() || isLoggingIn) return;
+
+    setIsLoggingIn(true);
+    const success = await onLogin(password);
+    
+    if (!success) {
       setError(true);
       setTimeout(() => setError(false), 2000);
+      setIsLoggingIn(false);
     }
   };
 
@@ -97,10 +102,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
 
             <button
               type="submit"
-              className="w-full orange-gradient py-4 rounded-2xl text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-brand/20 hover:shadow-brand/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              disabled={isLoggingIn}
+              className="w-full orange-gradient py-4 rounded-2xl text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-brand/20 hover:shadow-brand/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              Initialize Session
-              <ArrowRight className="w-4 h-4" />
+              {isLoggingIn ? 'Authenticating...' : 'Initialize Session'}
+              {!isLoggingIn && <ArrowRight className="w-4 h-4" />}
             </button>
           </form>
         </div>

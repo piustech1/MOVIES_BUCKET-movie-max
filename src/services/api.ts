@@ -4,14 +4,25 @@ import { Movie, MovieListResponse, UploadResponse } from '../types';
 const API_BASE = 'https://moviemax-worker.piustechdevoff.workers.dev'; 
 
 const getAuthHeaders = () => ({
-  'X-Auth-Key': 'greatdev', // Using the master key
+  'X-Auth-Key': 'greatdev', // Fixed Worker Key
   'Content-Type': 'application/json'
 });
 
 export const movieApi = {
+  // App Security Management
+  async verifyAppPassword(password: string): Promise<boolean> {
+    const savedPassword = localStorage.getItem('moviemax_sys_pass') || 'greatdev';
+    return password === savedPassword;
+  },
+
+  async updateAppPassword(newPassword: string): Promise<{ success: boolean }> {
+    localStorage.setItem('moviemax_sys_pass', newPassword);
+    return { success: true };
+  },
+
   async listMovies(): Promise<Movie[]> {
     const response = await fetch(`${API_BASE}/movies`, {
-      headers: { 'X-Auth-Key': 'greatdev' }
+      headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to fetch movies');
     const data: MovieListResponse = await response.json();
@@ -31,7 +42,7 @@ export const movieApi = {
     const fullMovieName = `${movieName}${extension}`;
     
     const presignResponse = await fetch(`${API_BASE}/presign?movieName=${encodeURIComponent(fullMovieName)}&folder=${encodeURIComponent(vj)}&contentType=${encodeURIComponent(file.type)}`, {
-      headers: { 'X-Auth-Key': 'greatdev' }
+      headers: getAuthHeaders()
     });
 
     if (!presignResponse.ok) {

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Users, Plus, Trash2, UserPlus, Loader2 } from 'lucide-react';
+import { Users, Folder, Loader2, Search, Info, ChevronRight } from 'lucide-react';
 import { movieApi } from '../services/api';
 
 export const VJManagementPage: React.FC = () => {
   const [vjs, setVjs] = useState<{ id: number; name: string }[]>([]);
-  const [newVj, setNewVj] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchVjs = async () => {
     setIsLoading(true);
@@ -26,84 +24,96 @@ export const VJManagementPage: React.FC = () => {
     fetchVjs();
   }, []);
 
-  const handleAddVj = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newVj.trim()) return;
-
-    setIsAdding(true);
-    setError(null);
-    try {
-      await movieApi.addVj(newVj.trim());
-      setNewVj('');
-      fetchVjs();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
-  const handleDeleteVj = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this VJ? Movies associated with this VJ will remain but their VJ tag will be orphaned.')) return;
-    try {
-      await movieApi.deleteVj(id);
-      fetchVjs();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const filteredVjs = vjs.filter(vj => vj.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h3 className="text-2xl font-black text-white tracking-tight mb-2">VJ Management</h3>
-          <p className="text-zinc-500">View the list of system-defined Video Jockeys (VJs) used for grouping movies.</p>
-        </div>
-        <div className="px-5 py-2 bg-brand/10 border border-brand/20 rounded-xl">
-          <span className="text-xs font-black text-brand uppercase tracking-widest">{vjs.length} System VJs</span>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto">
-        <div className="glass-card overflow-hidden">
-          <div className="p-6 border-b border-border-dark bg-zinc-800/20">
-            <h4 className="text-sm font-black text-zinc-400 uppercase tracking-widest">Available VJs</h4>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-2 text-brand font-bold text-xs uppercase tracking-[0.3em] mb-3">
+            <Users className="w-4 h-4" />
+            Ecosystem Assets
           </div>
-
-          {isLoading ? (
-            <div className="p-20 flex flex-col items-center justify-center text-zinc-500">
-              <Loader2 className="w-10 h-10 animate-spin mb-4 text-brand" />
-              <p className="font-bold text-xs uppercase tracking-widest">Loading VJs...</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border-dark">
-              {vjs.map((vj, i) => (
-                <motion.div
-                  key={vj.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="p-5 flex items-center justify-between group hover:bg-zinc-800/30 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 border border-border-dark flex items-center justify-center text-brand font-black text-xs">
-                      {vj.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="font-bold text-white">{vj.name}</p>
-                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">System Folder</p>
-                    </div>
-                  </div>
-                  <div className="px-3 py-1 bg-zinc-900 border border-border-dark rounded-lg text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                    Active
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
+          <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-3">VJ Repository</h3>
+          <p className="text-zinc-500 font-medium">Manage the system-defined Video Jockey directories. These act as the primary structural nodes for your content distribution network.</p>
+        </div>
+        
+        <div className="relative group flex-1 max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 group-focus-within:text-brand transition-colors" />
+          <input 
+            type="text"
+            placeholder="Search VJ directories..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-border-dark rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-sm font-bold shadow-lg shadow-black/20"
+          />
         </div>
       </div>
+
+      <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 flex items-start gap-4">
+        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+          <Info className="w-5 h-5 text-blue-400" />
+        </div>
+        <div>
+          <p className="text-xs font-black text-blue-400 uppercase tracking-widest mb-1">Architecture Note</p>
+          <p className="text-xs text-zinc-500 font-medium leading-relaxed">
+            VJ management is currently synchronized with the server's hard-wired structure to ensure zero-latency routing and prevent orphaned bucket pointers.
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="py-32 flex flex-col items-center justify-center text-zinc-500">
+          <Loader2 className="w-12 h-12 animate-spin mb-6 text-brand" />
+          <p className="font-black text-xs uppercase tracking-[0.2em] animate-pulse">Initializing VJ Nodes...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredVjs.map((vj, i) => (
+            <motion.div
+              key={vj.id}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              whileHover={{ y: -5 }}
+              className="glass-card p-6 flex flex-col group cursor-default"
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-border-dark flex items-center justify-center text-brand font-black text-xl group-hover:scale-110 group-hover:border-brand/30 transition-all shadow-xl">
+                  {vj.name.charAt(3).toUpperCase() || vj.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-500/20">
+                  Online
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <h4 className="text-xl font-bold text-white mb-1 group-hover:text-brand transition-colors capitalize">{vj.name}</h4>
+                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest flex items-center gap-2">
+                  <Folder className="w-3 h-3 text-zinc-700" />
+                  R2 Sector: /{vj.name.toLowerCase().replace(/ /g, '-')}
+                </p>
+              </div>
+
+              <div className="mt-auto pt-6 border-t border-border-dark flex items-center justify-between">
+                 <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Protocol</span>
+                    <span className="text-[11px] font-bold text-zinc-400">S3 Compliant</span>
+                 </div>
+                 <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-600 hover:text-white transition-all">
+                    <ChevronRight className="w-5 h-5" />
+                 </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+      
+      {!isLoading && filteredVjs.length === 0 && (
+        <div className="py-20 text-center glass-card border-dashed">
+          <p className="text-zinc-500 font-bold uppercase tracking-widest">No VJs found matching your search</p>
+        </div>
+      )}
     </div>
   );
 };

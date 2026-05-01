@@ -21,15 +21,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, onRefresh, totalSize }
     return `${gb.toFixed(2)} GB`;
   };
 
-  const usagePercentage = Math.min((totalSize / (1024 * 1024 * 1024 * 1024)) * 100, 100);
+  const usagePercentage = Math.min((totalSize / (3 * 1024 * 1024 * 1024 * 1024)) * 100, 100);
 
   const navItems = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/library', label: 'Movie Library', icon: Database },
-    { to: '/upload', label: 'Upload Content', icon: Upload },
-    { to: '/vjs', label: 'VJ Management', icon: Users },
-    { to: '/security', label: 'Security', icon: Shield },
-    { to: '/settings', label: 'Settings', icon: Settings },
+    { to: '/', label: 'Overview', icon: LayoutDashboard },
+    { to: '/library', label: 'Content Library', icon: Database },
+    { to: '/upload', label: 'Ingestion', icon: Upload },
+    { to: '/vjs', label: 'VJ Folders', icon: Users },
+    { to: '/security', label: 'Vault', icon: Shield },
+    { to: '/settings', label: 'System', icon: Settings },
   ];
 
   const NavContent = () => (
@@ -80,7 +80,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onRefresh, totalSize }
           />
         </div>
         <p className="text-[10px] text-zinc-500 mt-3 text-center font-medium">
-          {formatSize(totalSize)} / 1TB Used
+          {formatSize(totalSize)} / 3TB Used
         </p>
       </div>
     </>
