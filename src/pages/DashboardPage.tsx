@@ -26,9 +26,10 @@ import {
 
 interface DashboardPageProps {
   movies: Movie[];
+  isLoading?: boolean;
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ movies }) => {
+export const DashboardPage: React.FC<DashboardPageProps> = ({ movies, isLoading }) => {
   const totalSize = movies.reduce((acc, m) => acc + (m.size || 0), 0);
   const avgSize = movies.length > 0 ? totalSize / movies.length : 0;
   
@@ -86,7 +87,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ movies }) => {
               <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
-              <ArrowUpRight className="w-4 h-4 text-zinc-600 group-hover:text-brand transition-colors" />
+              {isLoading ? (
+                <div className="w-4 h-4 rounded-full border-2 border-brand/20 border-t-brand animate-spin"></div>
+              ) : (
+                <ArrowUpRight className="w-4 h-4 text-zinc-600 group-hover:text-brand transition-colors" />
+              )}
             </div>
             <div>
               <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">{stat.label}</p>

@@ -38,8 +38,8 @@ export const MovieList: React.FC<MovieListProps> = ({ movies, onDelete, isLoadin
 
   const filteredMovies = React.useMemo(() => 
     movies.filter(m => 
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (m.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (m.path || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (m.category && m.category.toLowerCase().includes(searchQuery.toLowerCase()))
     ), [movies, searchQuery]);
 

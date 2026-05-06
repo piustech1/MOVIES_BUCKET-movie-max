@@ -21,7 +21,7 @@ export const movieApi = {
   },
 
   async listMovies(): Promise<Movie[]> {
-    const response = await fetch(`${API_BASE}/movies`, {
+    const response = await fetch(`${API_BASE}/movies?t=${Date.now()}`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to fetch movies');
@@ -41,7 +41,8 @@ export const movieApi = {
     const extension = file.name.substring(file.name.lastIndexOf('.'));
     const fullMovieName = `${movieName}${extension}`;
     
-    const presignResponse = await fetch(`${API_BASE}/presign?movieName=${encodeURIComponent(fullMovieName)}&folder=${encodeURIComponent(vj)}&contentType=${encodeURIComponent(file.type)}`, {
+    // We send category as an extra param in case the worker can store it as metadata
+    const presignResponse = await fetch(`${API_BASE}/presign?movieName=${encodeURIComponent(fullMovieName)}&folder=${encodeURIComponent(vj)}&category=${encodeURIComponent(category)}&contentType=${encodeURIComponent(file.type)}`, {
       headers: getAuthHeaders()
     });
 

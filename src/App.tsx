@@ -20,8 +20,9 @@ export default function App() {
     return localStorage.getItem('moviemax_auth') === 'true';
   });
 
-  const fetchMovies = async () => {
+  const fetchMovies = async (delayMs: number = 0) => {
     if (!isAuthenticated) return;
+    if (delayMs > 0) await new Promise(resolve => setTimeout(resolve, delayMs));
     setIsLoading(true);
     try {
       const data = await movieApi.listMovies();
@@ -76,7 +77,7 @@ export default function App() {
               <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-xl">{error}</p>
             </div>
             <button 
-              onClick={fetchMovies}
+              onClick={() => fetchMovies()}
               className="px-8 py-3 bg-red-500 text-white rounded-2xl text-xs font-black transition-all hover:bg-red-600 active:scale-95 shadow-xl shadow-red-500/20 uppercase tracking-[0.2em]"
             >
               Recalibrate
@@ -85,15 +86,15 @@ export default function App() {
         )}
 
         <Routes>
-          <Route path="/" element={<DashboardPage movies={movies} />} />
+          <Route path="/" element={<DashboardPage movies={movies} isLoading={isLoading} />} />
           <Route path="/library" element={
             <LibraryPage 
               movies={movies} 
-              onDelete={fetchMovies} 
+              onDelete={() => fetchMovies(500)} 
               isLoading={isLoading} 
             />
           } />
-          <Route path="/upload" element={<UploadPage onUploadSuccess={fetchMovies} />} />
+          <Route path="/upload" element={<UploadPage onUploadSuccess={() => fetchMovies(800)} />} />
           <Route path="/vjs" element={<VJManagementPage />} />
           <Route path="/security" element={<SecurityPage />} />
           <Route path="/settings" element={
