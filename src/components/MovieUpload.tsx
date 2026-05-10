@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, Film, Folder, Tag, Loader2, CheckCircle2, AlertCircle, Users } from 'lucide-react';
 import { movieApi } from '../services/api';
 import { motion, AnimatePresence } from 'motion/react';
+import { sanitizeFolderName } from '../lib/utils';
 
 interface MovieUploadProps {
   onUploadSuccess: () => void;
@@ -26,7 +27,7 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
       try {
         const data = await movieApi.listVjs();
         setVjs(data);
-        if (data.length > 0) setVj(data[0].name);
+        if (data.length > 0) setVj(sanitizeFolderName(data[0].name));
       } catch (err) {
         console.error('Failed to fetch VJs', err);
       } finally {
@@ -194,14 +195,18 @@ export const MovieUpload: React.FC<MovieUploadProps> = ({ onUploadSuccess }) => 
                 </label>
                 <select
                   value={vj}
-                  onChange={(e) => setVj(e.target.value)}
+                  onChange={(e) => setVj(sanitizeFolderName(e.target.value))}
                   disabled={isLoadingVjs || vjs.length === 0 || isUploading}
                   className="w-full px-6 py-4 bg-zinc-900 border border-border-dark rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-white font-bold appearance-none cursor-pointer shadow-inner shadow-black/20 disabled:opacity-50"
                 >
                   {isLoadingVjs ? (
                     <option>Syncing...</option>
                   ) : (
-                    vjs.map(v => <option key={v.id} value={v.name} className="bg-zinc-900">{v.name}</option>)
+                    vjs.map(v => (
+                      <option key={v.id} value={sanitizeFolderName(v.name)} className="bg-zinc-900">
+                        {v.name}
+                      </option>
+                    ))
                   )}
                 </select>
               </div>

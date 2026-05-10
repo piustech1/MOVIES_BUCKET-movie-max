@@ -90,11 +90,11 @@ export default function App() {
           <Route path="/library" element={
             <LibraryPage 
               movies={movies} 
-              onDelete={() => fetchMovies(500)} 
+              onDelete={() => fetchMovies(1000)} 
               isLoading={isLoading} 
             />
           } />
-          <Route path="/upload" element={<UploadPage onUploadSuccess={() => fetchMovies(800)} />} />
+          <Route path="/upload" element={<UploadPage onUploadSuccess={() => fetchMovies(2500)} />} />
           <Route path="/vjs" element={<VJManagementPage />} />
           <Route path="/security" element={<SecurityPage />} />
           <Route path="/settings" element={

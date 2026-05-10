@@ -94,13 +94,7 @@ export const movieApi = {
       xhr.addEventListener('load', () => {
         console.log('[Upload] XHR Load Event Triggered');
         console.log('[Upload] HTTP Status Code:', xhr.status);
-        console.log('[Upload] HTTP Status Text:', xhr.statusText);
-        console.log('[Upload] Response Headers:', xhr.getAllResponseHeaders());
         
-        // ETag is a strong indicator of a successful S3/R2 PUT
-        const etag = xhr.getResponseHeader('ETag');
-        console.log('[Upload] R2 ETag:', etag || 'MISSING (Warning: S3/R2 usually returns ETag on success)');
-
         if (xhr.status >= 200 && xhr.status < 300) {
           console.log('[Upload] SUCCESS: R2 confirmed receipt of payload.');
           resolve({ success: true, path: key } as any);
@@ -126,13 +120,13 @@ export const movieApi = {
 
       xhr.open('PUT', uploadUrl);
       
-      // Ensure Content-Type is logged and sent correctly
-      const contentType = file.type || 'application/octet-stream';
-      console.log('[Upload] Setting Request Header: Content-Type =', contentType);
-      xhr.setRequestHeader('Content-Type', contentType);
-      
-      console.log('[Upload] Dispatching binary payload to R2...');
-      xhr.send(file);
+    // Ensure Content-Type is logged and sent correctly
+    const contentType = file.type || 'video/mp4'; 
+    console.log('[Upload] Setting Request Header: Content-Type =', contentType);
+    xhr.setRequestHeader('Content-Type', contentType);
+    
+    console.log('[Upload] Dispatching binary payload to R2...');
+    xhr.send(file);
     });
   },
 
