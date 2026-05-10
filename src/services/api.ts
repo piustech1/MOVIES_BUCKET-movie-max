@@ -36,27 +36,43 @@ export const movieApi = {
     vj: string,       // This is the 'folder' parameter for the Worker (vj-emmy, etc.)
     onProgress?: (percent: number) => void
   ): Promise<UploadResponse> {
+    console.log('[Upload] Starting upload process for:', movieName);
+    console.log('[Upload] File size:', (file.size / (1024 * 1024)).toFixed(2), 'MB');
+    console.log('[Upload] Content-Type:', file.type);
+    
     // 1. Get a Presigned URL from the Worker
-    // The Worker expects 'folder' (the VJ) and 'movieName'
     const extension = file.name.substring(file.name.lastIndexOf('.'));
     const fullMovieName = `${movieName}${extension}`;
-    
-    // We send category as an extra param in case the worker can store it as metadata
-    const presignResponse = await fetch(`${API_BASE}/presign?movieName=${encodeURIComponent(fullMovieName)}&folder=${encodeURIComponent(vj)}&category=${encodeURIComponent(category)}&contentType=${encodeURIComponent(file.type)}`, {
+    const presignParams = new URLSearchParams({
+      movieName: fullMovieName,
+      folder: vj,
+      category: category,
+      contentType: file.type
+    });
+
+    console.log('[Upload] Requesting presigned URL from:', `${API_BASE}/presign?${presignParams.toString()}`);
+
+    const presignResponse = await fetch(`${API_BASE}/presign?${presignParams.toString()}`, {
       headers: getAuthHeaders()
     });
 
     if (!presignResponse.ok) {
       const err = await presignResponse.json();
-      throw new Error(err.error || 'Failed to get upload authorization');
+      console.error('[Upload] Presign failed:', err);
+      throw new Error(err.error || 'Failed to get upload authorization from Worker');
     }
 
     const { uploadUrl, key } = await presignResponse.json();
+    console.log('[Upload] Presigned URL received!');
+    console.log('[Upload] Storage Key (R2 Path):', key);
+    console.log('[Upload] Presigned URL (First 100 chars):', uploadUrl.substring(0, 100) + '...');
 
     // 2. Upload directly to R2 using the Presigned URL
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       
+      console.log('[Upload] Initializing XMLHttpRequest for PUT request');
+
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable && onProgress) {
           const percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -65,19 +81,46 @@ export const movieApi = {
       });
 
       xhr.addEventListener('load', () => {
+        console.log('[Upload] XHR Load Event Triggered');
+        console.log('[Upload] HTTP Status Code:', xhr.status);
+        console.log('[Upload] HTTP Status Text:', xhr.statusText);
+        console.log('[Upload] Response Headers:', xhr.getAllResponseHeaders());
+        
+        // ETag is a strong indicator of a successful S3/R2 PUT
+        const etag = xhr.getResponseHeader('ETag');
+        console.log('[Upload] R2 ETag:', etag || 'MISSING (Warning: S3/R2 usually returns ETag on success)');
+
         if (xhr.status >= 200 && xhr.status < 300) {
+          console.log('[Upload] SUCCESS: R2 confirmed receipt of payload.');
           resolve({ success: true, path: key } as any);
         } else {
-          reject(new Error(`R2 Upload failed with status ${xhr.status}`));
+          console.error('[Upload] FAILURE: R2 rejected the payload.');
+          const responseBody = xhr.responseText;
+          console.error('[Upload] Error body from R2:', responseBody);
+          const errorMessage = `Upload failed: R2 returned status ${xhr.status}. ${responseBody.substring(0, 200)}`;
+          reject(new Error(errorMessage));
         }
       });
 
-      xhr.addEventListener('error', () => {
-        reject(new Error('Network error during direct R2 upload. Check your R2 CORS settings.'));
+      xhr.addEventListener('error', (event) => {
+        console.error('[Upload] XHR Error Event:', event);
+        console.error('[Upload] This often means a CORS error. Ensure the R2 bucket allows PUT from this origin.');
+        reject(new Error('Network error during direct R2 upload. Check browser console for CORS details.'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        console.warn('[Upload] XHR Abort Event');
+        reject(new Error('Upload interrupted.'));
       });
 
       xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
+      
+      // Ensure Content-Type is logged and sent correctly
+      const contentType = file.type || 'application/octet-stream';
+      console.log('[Upload] Setting Request Header: Content-Type =', contentType);
+      xhr.setRequestHeader('Content-Type', contentType);
+      
+      console.log('[Upload] Dispatching binary payload to R2...');
       xhr.send(file);
     });
   },
