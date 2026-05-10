@@ -2,6 +2,7 @@ import React from 'react';
 import { Film, Trash2, ExternalLink, Copy, Check, Search, Filter } from 'lucide-react';
 import { Movie } from '../types';
 import { movieApi } from '../services/api';
+import { sanitizeFolderName } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface MovieListProps {
@@ -36,12 +37,14 @@ export const MovieList: React.FC<MovieListProps> = ({ movies, onDelete, isLoadin
     return mb > 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(2)} MB`;
   };
 
-  const filteredMovies = React.useMemo(() => 
-    movies.filter(m => 
+  const filteredMovies = React.useMemo(() => {
+    const search = sanitizeFolderName(searchQuery);
+    return movies.filter(m => 
       (m.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (m.path || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (m.category && m.category.toLowerCase().includes(searchQuery.toLowerCase()))
-    ), [movies, searchQuery]);
+      (m.category && sanitizeFolderName(m.category).includes(search))
+    );
+  }, [movies, searchQuery]);
 
   // Group stats for the filtered list
   const filteredSize = filteredMovies.reduce((acc, m) => acc + (m.size || 0), 0);

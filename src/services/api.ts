@@ -1,4 +1,5 @@
 import { Movie, MovieListResponse, UploadResponse } from '../types';
+import { sanitizeFolderName } from '../lib/utils';
 
 // The external Cloudflare Worker URL provided by the user
 const API_BASE = 'https://moviemax-worker.piustechdevoff.workers.dev'; 
@@ -26,7 +27,12 @@ export const movieApi = {
     });
     if (!response.ok) throw new Error('Failed to fetch movies');
     const data: MovieListResponse = await response.json();
-    return data.movies;
+    
+    // Normalize categories for consistency
+    return data.movies.map(movie => ({
+      ...movie,
+      category: movie.category ? sanitizeFolderName(movie.category) : undefined
+    }));
   },
 
   async uploadMovie(
@@ -43,9 +49,14 @@ export const movieApi = {
     // 1. Get a Presigned URL from the Worker
     const extension = file.name.substring(file.name.lastIndexOf('.'));
     const fullMovieName = `${movieName}${extension}`;
+    const sanitizedVj = sanitizeFolderName(vj);
+    
+    console.log('[Upload] Original Folder:', vj);
+    console.log('[Upload] Sanitized Folder:', sanitizedVj);
+
     const presignParams = new URLSearchParams({
       movieName: fullMovieName,
-      folder: vj,
+      folder: sanitizedVj,
       category: category,
       contentType: file.type
     });
@@ -140,8 +151,8 @@ export const movieApi = {
   // VJ Management (Hardcoded)
   async listVjs(): Promise<{ id: number; name: string }[]> {
     const vjs = [
-      'vj junior', 'vj ice p', 'vj Emmy', 'vj shan', 'vj mark', 
-      'vj Uncle T', 'vj Mosco', 'vj Musa', 'vj jingo'
+      'vj-junior', 'vj-ice-p', 'vj-emmy', 'vj-shan', 'vj-mark', 
+      'vj-uncle-t', 'vj-mosco', 'vj-musa', 'vj-jingo'
     ];
     return vjs.map((name, index) => ({ id: index + 1, name }));
   },

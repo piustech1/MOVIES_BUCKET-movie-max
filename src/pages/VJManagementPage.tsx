@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Users, Folder, Loader2, Search, Info, ChevronRight } from 'lucide-react';
 import { movieApi } from '../services/api';
+import { sanitizeFolderName } from '../lib/utils';
 
 export const VJManagementPage: React.FC = () => {
   const [vjs, setVjs] = useState<{ id: number; name: string }[]>([]);
@@ -24,7 +25,10 @@ export const VJManagementPage: React.FC = () => {
     fetchVjs();
   }, []);
 
-  const filteredVjs = vjs.filter(vj => vj.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredVjs = vjs.filter(vj => {
+    const search = sanitizeFolderName(searchQuery);
+    return sanitizeFolderName(vj.name).includes(search);
+  });
 
   return (
     <div className="space-y-10">
@@ -91,7 +95,7 @@ export const VJManagementPage: React.FC = () => {
                 <h4 className="text-xl font-bold text-white mb-1 group-hover:text-brand transition-colors capitalize">{vj.name}</h4>
                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest flex items-center gap-2">
                   <Folder className="w-3 h-3 text-zinc-700" />
-                  R2 Sector: /{vj.name.toLowerCase().replace(/ /g, '-')}
+                  R2 Sector: /{sanitizeFolderName(vj.name)}
                 </p>
               </div>
 

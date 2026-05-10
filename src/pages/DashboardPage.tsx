@@ -11,6 +11,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { Movie } from '../types';
+import { sanitizeFolderName } from '../lib/utils';
 import { 
   BarChart, 
   Bar, 
@@ -44,7 +45,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ movies, isLoading 
 
   // Group by category (VJ)
   const categoryMap = movies.reduce((acc, movie) => {
-    const cat = movie.category || 'General';
+    const rawCat = movie.category || 'General';
+    const cat = sanitizeFolderName(rawCat);
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
