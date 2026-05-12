@@ -27,6 +27,8 @@ export const movieApi = {
     });
     if (!response.ok) throw new Error('Failed to fetch movies');
     const data: MovieListResponse = await response.json();
+    console.log('[System] Sync successful. Memory objects retrieved:', data.movies.length);
+    console.log('[System] Raw data snapshot (First object or null):', data.movies[0] || 'NONE');
     
     // Normalize categories for consistency
     return data.movies.map(movie => ({
@@ -94,9 +96,17 @@ export const movieApi = {
       xhr.addEventListener('load', () => {
         console.log('[Upload] XHR Load Event Triggered');
         console.log('[Upload] HTTP Status Code:', xhr.status);
+        console.log('[Upload] Response Headers:', xhr.getAllResponseHeaders());
         
+        const etag = xhr.getResponseHeader('ETag');
+        if (etag) {
+          console.log('[Upload] R2 ETag received:', etag);
+        } else {
+          console.warn('[Upload] R2 ETag MISSING (Warning: S3/R2 usually returns ETag on success or check CORS exposed headers)');
+        }
+
         if (xhr.status >= 200 && xhr.status < 300) {
-          console.log('[Upload] SUCCESS: R2 confirmed receipt of payload.');
+          console.log('[Upload] SUCCESS: R2 confirmed receipt of payload with status', xhr.status);
           resolve({ success: true, path: key } as any);
         } else {
           console.error('[Upload] FAILURE: R2 rejected the payload.');
