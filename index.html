@@ -637,6 +637,17 @@
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 Preview
               </button>
+
+              <button 
+                class="btn-copy p-2 hover:bg-brand-500/10 text-onyx-400 hover:text-brand-400 border border-transparent hover:border-brand-500/20 rounded-lg transition-all active:scale-95 flex items-center justify-center"
+                data-url="${mov.url}"
+                data-name="${mov.name}"
+                title="Copy Streaming URL"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+              </button>
               
               <button 
                 class="btn-delete p-2 hover:bg-red-500/10 text-onyx-500 hover:text-red-400 border border-transparent hover:border-red-500/20 rounded-lg transition-all active:scale-95 flex items-center justify-center"
@@ -654,6 +665,11 @@
         card.querySelector('.btn-play').addEventListener('click', (e) => {
           const btn = e.currentTarget;
           openTheater(btn.dataset.url, btn.dataset.name, btn.dataset.folder);
+        });
+
+        card.querySelector('.btn-copy').addEventListener('click', (e) => {
+          const btn = e.currentTarget;
+          copyToClipboard(btn.dataset.url, btn.dataset.name);
         });
 
         card.querySelector('.btn-delete').addEventListener('click', async (e) => {
@@ -688,6 +704,43 @@
       elTheaterVideo.src = '';
       elVideoTheater.classList.add('hidden');
       elVideoTheater.classList.remove('flex');
+    }
+
+    // Robust copy to clipboard utility with fallback
+    async function copyToClipboard(text, name) {
+      if (!text) {
+        showToast("Error: No URL available to copy.", "error");
+        return;
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          showToast(`Stream URL for "${name}" copied!`);
+          return;
+        }
+      } catch (err) {
+        console.warn("navigator.clipboard failed, attempting fallback copy method:", err);
+      }
+      
+      // Fallback
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed'; // prevent scrolling
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (success) {
+          showToast(`Stream URL for "${name}" copied!`);
+        } else {
+          throw new Error("execCommand copy returned false");
+        }
+      } catch (err) {
+        console.error("Clipboard writing error:", err);
+        showToast("Failed to copy link automatically. Please check your browser permissions.", "error");
+      }
     }
 
     // Log tracking for the console output in the visual progress panel
