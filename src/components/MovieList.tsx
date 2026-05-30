@@ -20,8 +20,8 @@ export const MovieList: React.FC<MovieListProps> = ({ movies, onDelete, isLoadin
     try {
       await movieApi.deleteMovie(path);
       onDelete();
-    } catch (err) {
-      alert('SYSTEM ERROR: Deletion protocol failed.');
+    } catch (err: any) {
+      alert(`SYSTEM ERROR: Deletion protocol failed.\n${err.message || 'Unknown network error'}`);
     }
   };
 

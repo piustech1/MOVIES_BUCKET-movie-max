@@ -1,13 +1,977 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MovieMax Server | Admin Portal</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MovieMax Admin Portal | Cloudflare R2 Console</title>
+  
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              900: '#064e3b',
+              950: '#022c22',
+            },
+            onyx: {
+              950: '#06080f',
+              900: '#0b0f19',
+              850: '#111726',
+              800: '#172033',
+              700: '#1e293b',
+              600: '#334155',
+              500: '#64748b',
+              400: '#94a3b8',
+              300: '#cbd5e1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    body {
+      background-color: #06080f; /* Onyx 950 base */
+      color: #94a3b8;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* Neon glow and glass effects */
+    .neon-border {
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .glass-card {
+      background: rgba(17, 23, 38, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(30, 41, 59, 0.8);
+    }
+    
+    .glass-card:hover {
+      border-color: rgba(52, 211, 153, 0.3);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #06080f;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #172033;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #10b981;
+    }
 
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fadeIn {
+      animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased flex flex-col selection:bg-brand-500 selection:text-onyx-950">
+
+  <!-- Header Section -->
+  <header class="sticky top-0 z-40 border-b border-onyx-800 bg-onyx-950/90 backdrop-blur-md px-6 py-4">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <!-- Logo Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 p-0.5 shadow-lg shadow-brand-500/25 flex items-center justify-center">
+          <div class="w-full h-full rounded-[10px] bg-onyx-900 flex items-center justify-center">
+            <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            MovieMax <span class="text-xs font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-brand-950 text-brand-400 border border-brand-900">R2 Console</span>
+          </h1>
+          <p class="text-xs text-onyx-400 font-medium">Direct Admin Liaison for Cloudflare R2 Storage Node</p>
+        </div>
+      </div>
+
+      <!-- Action State Rails -->
+      <div class="flex items-center gap-3">
+        <!-- R2 Connection Meter -->
+        <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-onyx-900 border border-onyx-800 text-xs text-brand-400 font-mono">
+          <span class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></span>
+          <span>Worker: CONNECTED</span>
+        </div>
+        
+        <!-- Refresh Button -->
+        <button id="btn-refresh" class="p-2 rounded-xl bg-onyx-900 border border-onyx-800 text-onyx-300 hover:text-brand-400 hover:border-brand-500/30 transition-all active:scale-95 flex items-center justify-center shadow" title="Refresh Movies Grid">
+          <svg class="w-5 h-5" id="icon-refresh" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 16H3"></path>
+          </svg>
+        </button>
+      </div>
+      
+    </div>
+  </header>
+
+  <!-- Notification Banner -->
+  <div id="toast-container" class="fixed top-20 right-6 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none"></div>
+
+  <!-- Primary Application Dashboard -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- LEFT SIDEBAR: Stats + Upload Engine (col-span-4) -->
+    <section class="lg:col-span-5 flex flex-col gap-8">
+      
+      <!-- Real-Time Metrics -->
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Metric Card 1 -->
+        <div class="glass-card rounded-2xl p-4 flex flex-col gap-1.5 relative overflow-hidden">
+          <div class="absolute right-3 top-3 opacity-10 text-brand-500">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
+            </svg>
+          </div>
+          <span class="text-xs text-onyx-400 font-bold uppercase tracking-widest">Total Movies</span>
+          <span id="stat-movies-count" class="text-3xl font-black text-white font-mono">0</span>
+          <span class="text-[10px] text-onyx-500 font-mono">Verified in R2 Index</span>
+        </div>
+
+        <!-- Metric Card 2 -->
+        <div class="glass-card rounded-2xl p-4 flex flex-col gap-1.5 relative overflow-hidden">
+          <div class="absolute right-3 top-3 opacity-10 text-brand-500">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+          </div>
+          <span class="text-xs text-onyx-400 font-bold uppercase tracking-widest">Storage Size</span>
+          <span id="stat-movies-size" class="text-3xl font-black text-white font-mono">0.0 MB</span>
+          <span class="text-[10px] text-onyx-500 font-mono">Total payload volume</span>
+        </div>
+      </div>
+
+      <!-- Upload Terminal Panel -->
+      <div class="glass-card rounded-3xl p-6 flex flex-col gap-5 relative border border-onyx-800">
+        <div class="border-b border-onyx-800 pb-4">
+          <h2 class="text-base font-black text-white tracking-wide uppercase flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Upload Control Node
+          </h2>
+          <p class="text-xs text-onyx-400 mt-1">Submit high-quality audio or video files directly to R2 Storage Nodes</p>
+        </div>
+
+        <!-- FORM ENGINE -->
+        <form id="form-upload" class="flex flex-col gap-4">
+          
+          <!-- VJ / Folder Scope -->
+          <div>
+            <label class="block text-xs font-black text-onyx-300 uppercase tracking-widest mb-1.5 font-mono">
+              Folder / VJ Scope *
+            </label>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="input-folder" 
+                required
+                placeholder="Type name (e.g. vj-jingo, action-movies)"
+                class="w-full px-4 py-3 bg-onyx-950 border border-onyx-700 rounded-xl text-white text-sm focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all placeholder:text-onyx-600 font-sans"
+              />
+            </div>
+            <!-- Auto Assistant categories suggestion -->
+            <div class="mt-2 flex flex-wrap gap-1.5" id="suggested-folders">
+              <!-- Dynamically populated from list -->
+            </div>
+          </div>
+
+          <!-- Movie Custom Name -->
+          <div>
+            <label class="block text-xs font-black text-onyx-300 uppercase tracking-widest mb-1.5 font-mono">
+              Movie Visual Name *
+            </label>
+            <input 
+              type="text" 
+              id="input-name" 
+              required
+              placeholder="e.g. Deadpool and Wolverine"
+              class="w-full px-4 py-3 bg-onyx-950 border border-onyx-700 rounded-xl text-white text-sm focus:ring-1 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all placeholder:text-onyx-600"
+            />
+          </div>
+
+          <!-- File Drag / Choice zone -->
+          <div>
+            <label class="block text-xs font-black text-onyx-300 uppercase tracking-widest mb-1.5 font-mono">
+              Select Payload Asset *
+            </label>
+            <div 
+              id="dropzone"
+              class="border-2 border-dashed border-onyx-700 hover:border-brand-400/40 rounded-2xl p-6 text-center cursor-pointer transition-all bg-onyx-950/40 relative flex flex-col items-center justify-center gap-2 group"
+            >
+              <input type="file" id="input-file" accept="video/*,audio/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required />
+              
+              <div class="w-12 h-12 rounded-xl bg-onyx-900 border border-onyx-800 flex items-center justify-center text-onyx-400 group-hover:text-brand-400 group-hover:bg-onyx-800 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+              </div>
+              <div>
+                <span class="text-xs font-semibold text-white block">Drag and drop file here</span>
+                <span class="text-[11px] text-onyx-500 block mt-0.5">MP4, MKV, MP3, WebM formats supported</span>
+              </div>
+              <!-- Selected File Label -->
+              <div id="selected-file-label" class="hidden mt-2 px-3 py-1.5 rounded-lg bg-brand-950/40 text-brand-400 border border-brand-900/35 text-[11px] font-mono break-all text-center">
+                No file chosen
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload Status Indicator Logs (Internal Operations Log Console) -->
+          <div id="panel-progress" class="hidden border border-onyx-800 bg-onyx-950/80 rounded-xl p-4 flex flex-col gap-3 font-mono text-[11px]">
+            <div class="flex items-center justify-between">
+              <span id="uploader-phase" class="text-brand-400 font-bold uppercase tracking-wider animate-pulse">Initializing...</span>
+              <span id="uploader-percentage" class="text-white font-bold">0%</span>
+            </div>
+            <div class="w-full bg-onyx-800 rounded-full h-2 overflow-hidden">
+              <div id="progress-bar" class="bg-gradient-to-r from-teal-400 to-brand-500 h-full w-0 transition-all duration-150"></div>
+            </div>
+            <div id="operation-logs" class="max-h-[80px] overflow-y-auto text-onyx-500 flex flex-col gap-1 pr-1">
+              <!-- Realtime logs appended here -->
+            </div>
+          </div>
+
+          <!-- Dispatch/Submit Button -->
+          <button 
+            type="submit" 
+            id="btn-submit"
+            class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-onyx-950 rounded-xl font-bold text-xs uppercase tracking-[0.15em] transition-all hover:shadow-lg hover:shadow-brand-500/10 active:scale-95 flex items-center justify-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            Dispatch Payload
+          </button>
+        </form>
+      </div>
+
+    </section>
+
+    <!-- RIGHT SIDEBAR: Movie Directory Grid (col-span-7) -->
+    <section class="lg:col-span-7 flex flex-col gap-6">
+      
+      <!-- List Controls Header -->
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between bg-onyx-900 border border-onyx-800 rounded-2xl p-4">
+        <!-- Search Field -->
+        <div class="relative w-full sm:max-w-xs">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-onyx-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </span>
+          <input 
+            type="text" 
+            id="input-search"
+            placeholder="Search films by name..."
+            class="w-full pl-9 pr-4 py-2 bg-onyx-950 border border-onyx-750 rounded-xl text-xs text-white focus:ring-1 focus:ring-brand-500 outline-none transition-all placeholder:text-onyx-600"
+          />
+        </div>
+
+        <!-- Filter category tags wrapper -->
+        <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" id="filter-wrapper">
+          <!-- Dynamically populated tags plus an "All" tag -->
+        </div>
+      </div>
+
+      <!-- Live Movie Directory Box -->
+      <div class="flex-1 flex flex-col">
+        <!-- Loader Screen -->
+        <div id="loader-panel" class="py-20 flex flex-col items-center justify-center gap-4 text-center">
+          <div class="w-10 h-10 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
+          <div>
+            <span class="text-xs text-white font-mono font-bold uppercase tracking-wider block">Querying R2 Node...</span>
+            <span class="text-[10px] text-onyx-500 block mt-1">Retrieving verified index objects live</span>
+          </div>
+        </div>
+
+        <!-- Error Screen -->
+        <div id="error-panel" class="hidden py-16 px-6 glass-card rounded-3xl text-center border-red-500/20 max-w-lg mx-auto w-full flex flex-col items-center gap-4 animate-fadeIn">
+          <div class="w-12 h-12 rounded-xl bg-red-500/15 flex items-center justify-center text-red-400 border border-red-500/10">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-black text-white uppercase tracking-wider">Liaison Disrupted</h4>
+            <p id="error-text" class="text-xs text-onyx-400 mt-2 font-medium leading-relaxed">Could not establish contact with Cloudflare storage node.</p>
+          </div>
+          <button id="btn-retry" class="px-5 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">
+            Recalibrate Connection
+          </button>
+        </div>
+
+        <!-- Empty Screen -->
+        <div id="empty-panel" class="hidden py-24 flex flex-col items-center justify-center gap-3 text-center animate-fadeIn">
+          <div class="w-14 h-14 rounded-full bg-onyx-900 border border-onyx-800 flex items-center justify-center text-onyx-600 shadow-inner">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
+            </svg>
+          </div>
+          <div>
+            <span class="text-xs text-white font-bold uppercase tracking-wider block">No movies found</span>
+            <span class="text-[11px] text-onyx-500 block mt-1">Bucket node reports zero entries or matching criteria</span>
+          </div>
+        </div>
+
+        <!-- Directory Grid -->
+        <div id="directory-grid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeIn">
+          <!-- Dynamically generated files -->
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- CINEMATIC VIDEO OVERLAY (Cinematic Stage) -->
+  <div id="video-theater" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 animate-fadeIn">
+    
+    <!-- Theater controls overlay -->
+    <div class="w-full max-w-4xl flex items-center justify-between text-white pb-3 border-b border-onyx-850 px-2">
+      <div class="flex flex-col">
+        <span id="theater-title" class="text-sm font-bold truncate tracking-wide">Movie Previewer</span>
+        <span id="theater-folder" class="font-mono text-[10px] text-brand-400 font-bold uppercase tracking-wider mt-0.5">VJ-DIRECT</span>
+      </div>
+      <button id="btn-close-theater" class="p-2 rounded-xl bg-onyx-900/60 border border-onyx-850 text-onyx-400 hover:text-white hover:border-white/20 transition-all active:scale-95" title="Close Stage">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Video frame -->
+    <div class="w-full max-w-4xl max-h-[70vh] aspect-video bg-black rounded-2xl overflow-hidden mt-6 shadow-2xl relative flex items-center justify-center">
+      <video id="theater-video" controls class="w-full h-full object-contain" poster=""></video>
+    </div>
+
+  </div>
+
+  <!-- CORE SCRIPT IMPLEMENTATION -->
+  <script>
+    const API_BASE = 'https://moviemax-worker.piustechdevoff.workers.dev';
+    const MASTER_KEY = 'greatdev';
+
+    // Application state
+    let moviesList = [];
+    let activeFilter = 'All';
+    let isUploading = false;
+
+    // Elements lookup
+    const elBtnRefresh = document.getElementById('btn-refresh');
+    const elIconRefresh = document.getElementById('icon-refresh');
+    const elStatCount = document.getElementById('stat-movies-count');
+    const elStatSize = document.getElementById('stat-movies-size');
+    const elInputFolder = document.getElementById('input-folder');
+    const elInputName = document.getElementById('input-name');
+    const elInputFile = document.getElementById('input-file');
+    const elDropzone = document.getElementById('dropzone');
+    const elSelectedFileLabel = document.getElementById('selected-file-label');
+    const elFormUpload = document.getElementById('form-upload');
+    const elPanelProgress = document.getElementById('panel-progress');
+    const elProgressPhase = document.getElementById('uploader-phase');
+    const elProgressPercent = document.getElementById('uploader-percentage');
+    const elProgressBar = document.getElementById('progress-bar');
+    const elOperationLogs = document.getElementById('operation-logs');
+    const elBtnSubmit = document.getElementById('btn-submit');
+    const elInputSearch = document.getElementById('input-search');
+    const elFilterWrapper = document.getElementById('filter-wrapper');
+    const elSuggestedFolders = document.getElementById('suggested-folders');
+    
+    // Panel screens
+    const elLoaderPanel = document.getElementById('loader-panel');
+    const elErrorPanel = document.getElementById('error-panel');
+    const elErrorText = document.getElementById('error-text');
+    const elBtnRetry = document.getElementById('btn-retry');
+    const elEmptyPanel = document.getElementById('empty-panel');
+    const elDirectoryGrid = document.getElementById('directory-grid');
+    
+    // Theater components
+    const elVideoTheater = document.getElementById('video-theater');
+    const elTheaterTitle = document.getElementById('theater-title');
+    const elTheaterFolder = document.getElementById('theater-folder');
+    const elTheaterVideo = document.getElementById('theater-video');
+    const elBtnCloseTheater = document.getElementById('btn-close-theater');
+
+    // Header generator
+    function getAuthHeaders() {
+      return {
+        'X-Auth-Key': MASTER_KEY
+      };
+    }
+
+    // Toast Alerts
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `p-4 rounded-xl flex items-center gap-3 border shadow-2xl transition-all duration-300 pointer-events-auto select-none translate-x-10 opacity-0 bg-onyx-900 text-xs font-semibold ${
+        type === 'success' ? 'border-brand-500/20 text-brand-400' : 'border-red-500/20 text-red-400'
+      }`;
+      
+      const icon = type === 'success' 
+        ? `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+        : `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+
+      toast.innerHTML = `${icon} <div class="flex-1">${message}</div>`;
+      container.appendChild(toast);
+
+      // Trigger animation frame details
+      requestAnimationFrame(() => {
+        toast.style.transform = 'translateX(0)';
+        toast.style.opacity = '1';
+      });
+
+      // Self-destruct after 4.5 seconds
+      setTimeout(() => {
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4500);
+    }
+
+    // Size unit parsed
+    function formatBytes(bytes) {
+      if (bytes === 0 || !bytes) return '0.00 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Sanitize user typed folders
+    function sanitizeFolderName(name) {
+      if (!name) return 'General';
+      return name
+        .trim()
+        .replace(/[^a-zA-Z0-9\-_ ]/g, '') // remove illegal chars
+        .replace(/\s+/g, '-')             // turn multiple spaces to a dash
+        .toLowerCase();
+    }
+
+    // Live movie polling index
+    async function fetchMoviesLive() {
+      elIconRefresh.classList.add('animate-spin');
+      elBtnRefresh.disabled = true;
+      
+      try {
+        const response = await fetch(`${API_BASE}/movies?t=${Date.now()}`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error(`Cloudflare API status code return failed with error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success && Array.isArray(data.movies)) {
+          moviesList = data.movies;
+          renderMetrics();
+          renderFoldersAssistant();
+          renderFilterTags();
+          renderMoviesGrid();
+          
+          elErrorPanel.classList.add('hidden');
+          elLoaderPanel.classList.add('hidden');
+        } else {
+          throw new Error(data.error || "The server sent an unrecognized catalog response shape.");
+        }
+      } catch (err) {
+        console.error("[Movies retrieval failure]", err);
+        elErrorText.textContent = err.message || "Failed to make sync connections with the storage server endpoint.";
+        elErrorPanel.classList.remove('hidden');
+        elLoaderPanel.classList.add('hidden');
+        elDirectoryGrid.classList.add('hidden');
+        elEmptyPanel.classList.add('hidden');
+      } finally {
+        elIconRefresh.classList.remove('animate-spin');
+        elBtnRefresh.disabled = false;
+      }
+    }
+
+    // Render counts and metric sizes
+    function renderMetrics() {
+      elStatCount.textContent = moviesList.length;
+      
+      const bytesTotal = moviesList.reduce((acc, mov) => acc + (mov.size || 0), 0);
+      elStatSize.textContent = formatBytes(bytesTotal);
+    }
+
+    // Render suggested quick folders choice list
+    function renderFoldersAssistant() {
+      elSuggestedFolders.innerHTML = '';
+      
+      // Extract unique categories, deduplicate
+      const categories = [...new Set(moviesList.map(m => m.folder || m.category).filter(Boolean))];
+      
+      if (categories.length === 0) {
+        categories.push('action-movies', 'comedy', 'vj-junior');
+      }
+
+      categories.slice(0, 5).forEach(folder => {
+        const span = document.createElement('span');
+        span.className = "px-2.5 py-1 text-[10px] font-mono font-bold uppercase rounded-md bg-onyx-900 border border-onyx-800 text-onyx-400 hover:text-brand-400 hover:border-brand-500/20 cursor-pointer transition-all";
+        span.textContent = folder;
+        span.addEventListener('click', () => {
+          elInputFolder.value = folder;
+        });
+        elSuggestedFolders.appendChild(span);
+      });
+    }
+
+    // Render Category filter buttons
+    function renderFilterTags() {
+      elFilterWrapper.innerHTML = '';
+      
+      const categories = ['All', ...new Set(moviesList.map(m => m.folder || m.category).filter(Boolean))];
+      
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        const isActive = activeFilter === cat;
+        btn.className = `px-3.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
+          isActive 
+            ? 'bg-brand-500 border-brand-500 text-onyx-950 shadow-md shadow-brand-500/10' 
+            : 'bg-onyx-950 border-onyx-750 text-onyx-400 hover:text-white hover:border-onyx-600'
+        }`;
+        btn.textContent = cat;
+        btn.addEventListener('click', () => {
+          activeFilter = cat;
+          renderFilterTags();
+          renderMoviesGrid();
+        });
+        elFilterWrapper.appendChild(btn);
+      });
+    }
+
+    // Render Grid items filtered live
+    function renderMoviesGrid() {
+      elDirectoryGrid.innerHTML = '';
+      
+      const searchVal = elInputSearch.value.trim().toLowerCase();
+      
+      const filtered = moviesList.filter(mov => {
+        const matchesCat = activeFilter === 'All' || (mov.folder || mov.category) === activeFilter;
+        const matchesSearch = !searchVal || mov.name.toLowerCase().includes(searchVal) || (mov.folder || mov.category || '').toLowerCase().includes(searchVal);
+        return matchesCat && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        elDirectoryGrid.classList.add('hidden');
+        elEmptyPanel.classList.remove('hidden');
+        return;
+      }
+
+      elEmptyPanel.classList.add('hidden');
+      elDirectoryGrid.classList.remove('hidden');
+
+      filtered.forEach(mov => {
+        const card = document.createElement('div');
+        card.className = "glass-card rounded-2xl p-5 flex flex-col justify-between gap-4 border border-onyx-800 relative select-none animate-fadeIn";
+        
+        // Render raw HTML structure with native visual cues
+        card.innerHTML = `
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-2.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase border border-brand-500/15 text-brand-400 bg-brand-950/45 tracking-wider truncate max-w-full">
+                ${mov.folder || mov.category || 'General'}
+              </span>
+              <span class="text-[10px] font-mono text-onyx-500 font-medium shrink-0">
+                ${formatBytes(mov.size)}
+              </span>
+            </div>
+            
+            <h3 class="text-sm font-bold text-white tracking-tight line-clamp-2 leading-relaxed" title="${mov.name}">
+              ${mov.name}
+            </h3>
+          </div>
+          
+          <div class="flex items-center justify-between border-t border-onyx-850 pt-3.5 mt-1">
+            <span class="text-[10px] text-onyx-500 font-medium">
+              ${mov.uploadedAt ? new Date(mov.uploadedAt).toLocaleDateString() : 'Unknown Date'}
+            </span>
+            
+            <div class="flex items-center gap-2">
+              <button 
+                class="btn-play px-3.5 py-1.5 bg-onyx-800/80 hover:bg-brand-500 text-onyx-100 hover:text-onyx-950 border border-onyx-700/60 hover:border-brand-500 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 active:scale-95"
+                data-url="${mov.url}"
+                data-name="${mov.name}"
+                data-folder="${mov.folder || mov.category || 'General'}"
+              >
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Preview
+              </button>
+              
+              <button 
+                class="btn-delete p-2 hover:bg-red-500/10 text-onyx-500 hover:text-red-400 border border-transparent hover:border-red-500/20 rounded-lg transition-all active:scale-95 flex items-center justify-center"
+                data-path="${mov.path}"
+                data-name="${mov.name}"
+                title="Delete Film"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Wire event triggers
+        card.querySelector('.btn-play').addEventListener('click', (e) => {
+          const btn = e.currentTarget;
+          openTheater(btn.dataset.url, btn.dataset.name, btn.dataset.folder);
+        });
+
+        card.querySelector('.btn-delete').addEventListener('click', async (e) => {
+          const btn = e.currentTarget;
+          await deleteMovieAction(btn.dataset.path, btn.dataset.name);
+        });
+
+        elDirectoryGrid.appendChild(card);
+      });
+    }
+
+    // Interactive Full-Window cinematic player
+    function openTheater(url, name, folder) {
+      if (!url) {
+        showToast("Unable to play: video URL is blank.", "error");
+        return;
+      }
+      elTheaterTitle.textContent = name;
+      elTheaterFolder.textContent = `VJ Direct: ${folder.toUpperCase()}`;
+      elTheaterVideo.src = url;
+      
+      elVideoTheater.classList.remove('hidden');
+      elVideoTheater.classList.add('flex');
+      
+      elTheaterVideo.play().catch(err => {
+        console.warn("Autoplay block protection triggered:", err);
+      });
+    }
+
+    function closeTheater() {
+      elTheaterVideo.pause();
+      elTheaterVideo.src = '';
+      elVideoTheater.classList.add('hidden');
+      elVideoTheater.classList.remove('flex');
+    }
+
+    // Log tracking for the console output in the visual progress panel
+    function logUploaderEvent(text, type = 'info') {
+      const p = document.createElement('p');
+      const time = new Date().toLocaleTimeString();
+      p.className = `leading-relaxed py-0.5 ${type === 'success' ? 'text-brand-400' : type === 'error' ? 'text-red-500 font-bold' : 'text-onyx-400'}`;
+      p.innerHTML = `<span class="text-onyx-600 font-bold">[${time}]</span> ${text}`;
+      elOperationLogs.appendChild(p);
+      elOperationLogs.scrollTop = elOperationLogs.scrollHeight;
+    }
+
+    // Handles direct binary R2 PUT transfer with upload verification
+    async function handlePayloadUpload(file, visualName, rawFolder) {
+      const sanitizedFolder = sanitizeFolderName(rawFolder);
+      const extension = file.name.substring(file.name.lastIndexOf('.'));
+      const fullMovieName = `${visualName}${extension}`;
+      
+      // Reset progress interface
+      elPanelProgress.classList.remove('hidden');
+      elProgressBar.style.width = '0%';
+      elProgressPercent.textContent = '0%';
+      elProgressPhase.textContent = 'Auth Check';
+      elOperationLogs.innerHTML = '';
+      
+      logUploaderEvent(`Starting file dispatch for '${visualName}' (${formatBytes(file.size)})...`);
+      logUploaderEvent(`Target folder set to [${sanitizedFolder}] (Derived: movies/${sanitizedFolder}/${fullMovieName})`);
+      isUploading = true;
+      elBtnSubmit.disabled = true;
+
+      try {
+        // Phase 1: Call worker presign url endpoint
+        logUploaderEvent("Step 1: Contacting Cloudflare system node to receive secure direct-upload authorization...");
+        
+        const presignParams = new URLSearchParams({
+          movieName: fullMovieName,
+          folder: sanitizedFolder,
+          contentType: file.type || 'video/mp4'
+        });
+
+        const presignUrl = `${API_BASE}/presign?${presignParams.toString()}`;
+        console.log('[API Dispatch] Requesting presign:', presignUrl);
+
+        const presignRes = await fetch(presignUrl, {
+          headers: getAuthHeaders()
+        });
+
+        if (!presignRes.ok) {
+          const rText = await presignRes.text();
+          let errData;
+          try { errData = JSON.parse(rText); } catch(_) {}
+          throw new Error(errData?.error || `Authorization request rejected by Worker: status ${presignRes.status}`);
+        }
+
+        const { uploadUrl, key } = await presignRes.json();
+        logUploaderEvent("Direct authorization approved! Target key generated.", 'success');
+        
+        // Phase 2: PUT Binary streams directly to Cloudflare
+        logUploaderEvent("Step 2: Stream PUT binary bundle directly to R2 Cloudflare block nodes...");
+        elProgressPhase.textContent = 'Transferring';
+
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const currentPercent = Math.round((e.loaded / e.total) * 100);
+              elProgressBar.style.width = `${currentPercent}%`;
+              elProgressPercent.textContent = `${currentPercent}%`;
+              
+              // Informative upload logs on chunk intervals
+              if (currentPercent % 25 === 0 && currentPercent > 0 && currentPercent < 100) {
+                logUploaderEvent(`Streaming progress: ${currentPercent}% complete...`);
+              }
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            console.log('[Upload XHR] Direct PUT return status code:', xhr.status);
+            // PUT standard response range checkout (Any 200 or 201 is perfect transaction)
+            if (xhr.status >= 200 && xhr.status < 300) {
+              logUploaderEvent("Binary payload successfully confirmed. Storage received bytes.", 'success');
+              resolve();
+            } else {
+              reject(new Error(`Storage bucket returned state code: ${xhr.status}. Transfer rejected.`));
+            }
+          });
+
+          xhr.addEventListener('error', () => {
+            reject(new Error("Physical layer socket disconnection experienced during transmission. Check CORS/Network settings."));
+          });
+
+          xhr.open('PUT', uploadUrl);
+          xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+          xhr.send(file);
+        });
+
+        // Phase 3: Verification indexing confirmations
+        logUploaderEvent("Step 3: Triggering Cloudflare Head validation to ensure direct bucket sync...");
+        elProgressPhase.textContent = 'Verifying';
+        
+        const verifyEndpoint = `${API_BASE}/verify-upload?key=${encodeURIComponent(key)}`;
+        let exists = false;
+        
+        // Poll worker endpoint for verification trace up to 8 times
+        const maxRetries = 8;
+        const delayBetweenPolls = 1500;
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          logUploaderEvent(`Verification query check ${attempt}/${maxRetries}...`);
+          
+          try {
+            const vRes = await fetch(verifyEndpoint, { headers: getAuthHeaders() });
+            
+            if (vRes.ok) {
+              const vData = await vRes.json();
+              if (vData.success && vData.exists) {
+                exists = true;
+                logUploaderEvent("Verification success! Key listed in Cloudflare catalog.", 'success');
+                break;
+              }
+            }
+          } catch(e) {
+            console.warn(`[Verification Attempt Error] Non-blocking trace:`, e);
+          }
+
+          if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, delayBetweenPolls));
+          }
+        }
+
+        if (!exists) {
+          throw new Error("File not found in storage after upload. Bucket index has not finalized or key misaligned.");
+        }
+
+        // Complete upload workflow
+        elProgressPhase.textContent = 'Success!';
+        logUploaderEvent(`Payload fully verified in R2. Synchronizing MovieMax views...`, 'success');
+        
+        showToast("Movie uploaded and verified successfully in storage!", 'success');
+        
+        // Fully wipe choices
+        elInputName.value = '';
+        elInputFile.value = '';
+        elSelectedFileLabel.textContent = 'No file chosen';
+        elSelectedFileLabel.classList.add('hidden');
+        
+        // Fetch new truth
+        await fetchMoviesLive();
+
+      } catch (err) {
+        console.error('[Upload System Error Log]', err);
+        elProgressPhase.textContent = 'Failed';
+        logUploaderEvent(`Error: ${err.message}`, 'error');
+        showToast(`Upload disrupted: ${err.message}`, 'error');
+      } finally {
+        isUploading = false;
+        elBtnSubmit.disabled = false;
+      }
+    }
+
+    // Action to delete movie cleanly
+    async function deleteMovieAction(path, name) {
+      const confirmDelete = confirm(`WARNING: Are you sure you want to permanently delete the movie:\n"${name}"?\nThis is a destructive operation and cannot be undone.`);
+      
+      if (!confirmDelete) return;
+
+      try {
+        showToast(`Issuing delete command on R2...`);
+        
+        const deleteUrl = `${API_BASE}/movie`;
+        const response = await fetch(deleteUrl, {
+          method: 'DELETE',
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ path: path })
+        });
+
+        if (!response.ok) {
+          const rText = await response.text();
+          let errData;
+          try { errData = JSON.parse(rText); } catch(_) {}
+          throw new Error(errData?.error || `Worker reported error status ${response.status} upon deletion request.`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast(`"${name}" successfully deleted!`);
+          // Query movies live immediately
+          await fetchMoviesLive();
+        } else {
+          throw new Error(data.error || "The storage node returned a negative confirmation on delete.");
+        }
+
+      } catch (err) {
+        console.error('[Delete System Error Log]', err);
+        showToast(`System Error: Deletion protocol failed.\n${err.message}`, 'error');
+      }
+    }
+
+    // EVENT LISTENERS REGISTER
+    
+    // Refresh clicker
+    elBtnRefresh.addEventListener('click', fetchMoviesLive);
+    elBtnRetry.addEventListener('click', fetchMoviesLive);
+
+    // Live search input handler
+    elInputSearch.addEventListener('input', renderMoviesGrid);
+
+    // Selected file label helper
+    elInputFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        elSelectedFileLabel.textContent = `${file.name} (${formatBytes(file.size)})`;
+        elSelectedFileLabel.classList.remove('hidden');
+        // Preset custom input visual name cleanly
+        const base = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        elInputName.value = base;
+      } else {
+        elSelectedFileLabel.textContent = 'No file chosen';
+        elSelectedFileLabel.classList.add('hidden');
+      }
+    });
+
+    // Dropzone visuals support
+    ['dragenter', 'dragover'].forEach(eventName => {
+      elDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elDropzone.classList.add('border-brand-500', 'bg-brand-950/20');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      elDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elDropzone.classList.remove('border-brand-500', 'bg-brand-950/20');
+      }, false);
+    });
+
+    elDropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        elInputFile.files = files;
+        // Trigger manually the input onchange effect
+        elInputFile.dispatchEvent(new Event('change'));
+      }
+    });
+
+    // Form uploader worker submission
+    elFormUpload.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const file = elInputFile.files[0];
+      const name = elInputName.value.trim();
+      const folder = elInputFolder.value.trim();
+
+      if (!file || !name || !folder) {
+        showToast("Please provide all required inputs.", 'error');
+        return;
+      }
+
+      if (isUploading) {
+        showToast("An upload transaction is already running in background.", 'error');
+        return;
+      }
+
+      handlePayloadUpload(file, name, folder);
+    });
+
+    // Close screen preview theater element
+    elBtnCloseTheater.addEventListener('click', closeTheater);
+    
+    // Close theater on clicking the backdrop mask as well
+    elVideoTheater.addEventListener('click', (e) => {
+      if (e.target === elVideoTheater) closeTheater();
+    });
+
+    // Start-up sequence call
+    fetchMoviesLive();
+    
+  </script>
+</body>
+</html>

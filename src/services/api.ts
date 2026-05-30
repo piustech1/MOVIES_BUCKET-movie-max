@@ -106,8 +106,46 @@ export const movieApi = {
         }
 
         if (xhr.status >= 200 && xhr.status < 300) {
-          console.log('[Upload] SUCCESS: R2 confirmed receipt of payload with status', xhr.status);
-          resolve({ success: true, path: key } as any);
+          console.log('[Upload] PUT SUCCESS: R2 confirmed receipt of payload. Proceeding to VERIFICATION phase...');
+          
+          // Poll /verify-upload endpoint to ensure R2 indexes and finalizes the file
+          const verifyKey = key;
+          const verifyUrl = `${API_BASE}/verify-upload?key=${encodeURIComponent(verifyKey)}`;
+          console.log('[Upload Verification] Querying worker endpoint: %s', verifyUrl);
+
+          const pollVerification = async (retries = 8, delay = 1500) => {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+              console.log(`[Upload Verification] Attempt ${attempt}/${retries}...`);
+              try {
+                const res = await fetch(verifyUrl, { headers: getAuthHeaders() });
+                console.log(`[Upload Verification] Response Status: ${res.status}`);
+                if (res.ok) {
+                  const verResult = await res.json();
+                  console.log('[Upload Verification] Result Cargo:', verResult);
+                  if (verResult.success && verResult.exists) {
+                    return verResult;
+                  }
+                }
+              } catch (e) {
+                console.warn(`[Upload Verification] Connection error on attempt ${attempt}:`, e);
+              }
+              if (attempt < retries) {
+                await new Promise(r => setTimeout(r, delay));
+              }
+            }
+            throw new Error(`Worker reported that the file could not be verified in R2 after ${retries} verification attempts.`);
+          };
+
+          pollVerification()
+            .then(verResult => {
+              console.log('[Upload] VERIFICATION SUCCESS: Object existence confirmed by Worker:', verResult);
+              const finalKey = verResult.key || verifyKey;
+              resolve({ success: true, path: finalKey } as any);
+            })
+            .catch(verifyErr => {
+              console.error('[Upload] VERIFICATION FAILURE:', verifyErr);
+              reject(new Error(`Validation failed post-upload: ${verifyErr.message}`));
+            });
         } else {
           console.error('[Upload] FAILURE: R2 rejected the payload.');
           const responseBody = xhr.responseText;
@@ -130,13 +168,13 @@ export const movieApi = {
 
       xhr.open('PUT', uploadUrl);
       
-    // Ensure Content-Type is logged and sent correctly
-    const contentType = file.type || 'video/mp4'; 
-    console.log('[Upload] Setting Request Header: Content-Type =', contentType);
-    xhr.setRequestHeader('Content-Type', contentType);
-    
-    console.log('[Upload] Dispatching binary payload to R2...');
-    xhr.send(file);
+      // Ensure Content-Type is logged and sent correctly
+      const contentType = file.type || 'video/mp4'; 
+      console.log('[Upload] Setting Request Header: Content-Type =', contentType);
+      xhr.setRequestHeader('Content-Type', contentType);
+      
+      console.log('[Upload] Dispatching binary payload to R2...');
+      xhr.send(file);
     });
   },
 
