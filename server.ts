@@ -29,14 +29,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Authentication Middleware
+// Authentication Middleware (Open admin mode)
 const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const authKey = req.headers['x-auth-key'];
-  if (authKey === 'greatdev') {
-    next();
-  } else {
-    res.status(401).json({ error: 'Unauthorized access. Please login.' });
-  }
+  // Open access mode: allow requests without blocking
+  next();
 };
 
 // VJ Management API (Protected)
