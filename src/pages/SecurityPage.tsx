@@ -51,10 +51,13 @@ export const SecurityPage: React.FC = () => {
           </div>
         </div>
         <div className="space-y-2">
-          <span className="text-[10px] font-mono font-black text-orange-500 uppercase tracking-[0.5em]">Security Matrix</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-widest">Open Access Active • Password Gate Removed</span>
+          </div>
           <h3 className="text-4xl font-black text-white tracking-tighter uppercase glow-text">Admin Credentials</h3>
           <p className="text-zinc-500 max-w-lg font-mono text-[11px] font-bold uppercase tracking-wider leading-relaxed">
-            Authorized personnel only. Rotating the administrative key affects all logical nodes and prevents unauthorized ingress into the management ecosystem.
+            The admin portal is currently set to open access. You can directly access all pages, uploads, movie management, and R2 operations without login interruptions.
           </p>
         </div>
       </div>
