@@ -10,18 +10,13 @@ import { LibraryPage } from './pages/LibraryPage';
 import { UploadPage } from './pages/UploadPage';
 import { VJManagementPage } from './pages/VJManagementPage';
 import { SecurityPage } from './pages/SecurityPage';
-import { AuthPage } from './pages/AuthPage';
 
 export default function App() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('moviemax_auth') === 'true';
-  });
 
   const fetchMovies = async (delayMs: number = 0) => {
-    if (!isAuthenticated) return;
     if (delayMs > 0) await new Promise(resolve => setTimeout(resolve, delayMs));
     setIsLoading(true);
     try {
@@ -38,27 +33,9 @@ export default function App() {
 
   useEffect(() => {
     fetchMovies();
-  }, [isAuthenticated]);
+  }, []);
 
   const totalSize = movies.reduce((acc, movie) => acc + (movie.size || 0), 0);
-
-  const handleLogin = async (password: string) => {
-    const success = await movieApi.verifyAppPassword(password);
-    if (success) {
-      setIsAuthenticated(true);
-      localStorage.setItem('moviemax_auth', 'true');
-    }
-    return success;
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('moviemax_auth');
-  };
-
-  if (!isAuthenticated) {
-    return <AuthPage onLogin={handleLogin} />;
-  }
 
   return (
     <Router>
